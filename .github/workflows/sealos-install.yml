@@ -1,0 +1,63 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Sealos Install By Code
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  push:
+    branches: [ "main" ]
+    paths:
+      - "**sealos-install.yml"
+      - "**actions.sh"
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  sealos-code:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Action
+        run: |
+          sudo mkdir -p /tmp/.sealos-action
+          sudo cp -rf * /tmp/.sealos-action/
+
+      - name: Trace memory
+        run: |
+          free -m
+
+      - name: Install sealos
+        run: |
+          sudo cmd=install  bash action.sh
+          sudo cmd=prune  bash action.sh
+
+      - name: Install sealos version
+        run: |
+          sudo sealos version --debug || true
+          sudo sealctl version 
+          sudo buildah version
+
+      - name: Login sealos
+        run: |
+          sudo sealos login -u ${{ github.repository_owner }} -p ${{ secrets.GH_TOKEN }} --debug ghcr.io
+
+      - name: Build sealos image by dockerfile
+        working-directory: test/build-dockerfile
+        run: |
+          sudo sealos build -t testactionimage:dockerfile -f Dockerfile .
+
+      - name: Build sealos image by kubefile
+        working-directory: test/build-kubefile
+        run: |
+          sudo sealos build -t testactionimage:kubefile -f Kubefile .
+
+      - name: Run images
+        run: |
+          sudo sealos images
+
+      - name: Trace memory
+        run: free -m

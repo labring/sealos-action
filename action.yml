@@ -1,0 +1,67 @@
+# https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions
+name: 'Auto setup sealos'
+description: 'Auto setup sealos'
+author: 'cuisongliu'
+
+branding:
+  # https://actions-cool.github.io/github-action-branding/
+  icon: 'file'
+  color: 'blue'
+
+inputs:
+  type:
+    description: 'Type of sealos cmd'
+    required: true
+    default: 'install'
+
+  sealosVersion:
+    description: 'sealos release version'
+    default: "4.1.3"
+
+  sealosGit:
+    description: 'sealos git addr'
+    default: "https://github.com/labring/sealos.git"
+
+  sealosGitBranch:
+    description: 'sealos git branch'
+    default: "main"
+
+  goAddr:
+    description: 'go download addr'
+    default: ""
+
+  pruneCRI:
+    description: 'remove cri pkg'
+    default: "true"
+
+  autoFetch:
+    description: 'auto fetch code'
+    default: "true"
+
+  working-directory:
+    description: "Directory to run `sealos build` from, if not project root"
+    default: "."
+
+#outputs:
+#  result:
+#    description: action result
+
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        sudo mkdir -p /tmp/.sealos-action
+        sudo cp -rf /home/runner/work/_actions/labring/sealos-action/v0.0.7/* /tmp/.sealos-action/
+        bash /tmp/.sealos-action/action.sh
+      shell: bash
+      id: default
+      env:
+        cmd: ${{ inputs.type }}
+        sealos_version: ${{ inputs.sealosVersion }}
+        sealosGit: ${{ inputs.sealosGit }}
+        sealosGitBranch: ${{ inputs.sealosGitBranch }}
+        autoFetch: ${{ inputs.autoFetch }}
+        pruneCRI: ${{ inputs.pruneCRI }}
+        goAddr: ${{ inputs.goAddr }}
+        action_directory: .sealos-action
+      working-directory: ${{ inputs.working-directory }}
